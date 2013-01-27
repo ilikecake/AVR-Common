@@ -31,7 +31,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-#include <LUFA/Drivers/USB/USB.h>
+#include <LUFA-120730/Drivers/USB/USB.h>
 
 #define MAGIC_BOOT_KEY            0xDC42ACCA
 
