@@ -40,6 +40,7 @@
 #define COMMAND_STATUS_TOP_LEVEL_WAITING	0x01	//Command has seen an enter keypress. The command is in the process of being parsed and executed. Input is disabled in the mode.
 #define COMMAND_STATUS_SUB_LEVEL_INPUT		0x02	//A sublevel command input has been requested by a command function. User key presses are being received and added to the subcommand string.
 #define COMMAND_STATUS_SUB_LEVEL_WAITING	0x03	//An enter has been seen in the subcommand input. The command and arguments are available to the command function. Input is disabled in this mode.
+#define COMMAND_STATUS_ANY_KEY_WAITING		0x04
 
 //Internal Global Variables
 //TODO: combine these variables if possible.
@@ -133,6 +134,14 @@ void CommandGetInputChar(uint8_t c)
 	uint8_t outByte[2];
 	outByte[0] = c;
 	outByte[1] = '\0';
+	
+	//If we are waiting for any key press, return after a single input.
+	if(CommandStatus == COMMAND_STATUS_ANY_KEY_WAITING)
+	{
+		command[0] = (char) c;
+		CommandStatus = COMMAND_STATUS_TOP_LEVEL_WAITING;
+		return;
+	}
 	
 	//Only recieve characters if the command function is waiting for a command.
 	if((CommandStatus == COMMAND_STATUS_TOP_LEVEL_INPUT) || (CommandStatus == COMMAND_STATUS_SUB_LEVEL_INPUT))
@@ -311,6 +320,17 @@ void GetNewCommand( void )
 	//Wait for user input
 	while(CommandStatus == COMMAND_STATUS_SUB_LEVEL_INPUT) {}
 	return;
+}
+
+char WaitForAnyKey( void )
+{
+	//Reenable input
+	CommandStatus = COMMAND_STATUS_ANY_KEY_WAITING;
+	
+	//Wait for user input
+	while(CommandStatus == COMMAND_STATUS_ANY_KEY_WAITING) {}
+
+	return command[0];
 }
 
 

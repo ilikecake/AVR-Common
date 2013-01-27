@@ -81,6 +81,7 @@ void RunCommand( void );
 //TODO: Give this function a better name.
 void GetNewCommand( void );
 
+char WaitForAnyKey( void );
 
 #endif
 /** @} */
