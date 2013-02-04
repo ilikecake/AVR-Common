@@ -23,42 +23,16 @@
 *	@{
 */
 
-//TODO: make this into a common library
+#include "i2c_soft.h"
+#include <avr/io.h>
+#include <stdio.h>
 
-//All includes go here
-#include "main.h"
-
-//Useful definitions
-//#define SOFT_I2C_STATUS_START			0x01
-//#define SOFT_I2C_STATUS_STOP			0x00
-
-//#define SOFT_I2C_STATUS_ARB_LOST		0x40
-//#define SOFT_I2C_STATUS_BUS_ERROR		0x80
-/*
-#define SOFT_I2C_STATUS_RS				0x01
-#define SOFT_I2C_STATUS_SLAW			0x02
-#define SOFT_I2C_STATUS_SEND			0x03
-#define SOFT_I2C_STATUS_SLAR			0x04
-#define SOFT_I2C_STATUS_RECEIVE			0x05
-#define SOFT_I2C_STATUS_STOP			0x06
-*/
 
 //I2C return codes
 #define SOFT_I2C_RETURN_OK				0x00
 #define SOFT_I2C_RETURN_NOACK			0x01
-
 #define SOFT_I2C_RETURN_ARB_LOST		0x40
 #define SOFT_I2C_RETURN_BUS_ERROR		0x80
-
-
-
-
-
-//Checks is the status is ok, and returns if not
-#define CheckStat(stat)  do {	if(stat != SOFT_I2C_RETURN_OK) {	\
-								I2CSoft_SendStop();					\
-								printf("Fail: %d\n", stat);			\
-								return stat; }} while ( 0 )
 
 /*
 #define SOFT_I2C_RETURN_SLAW_ACK		0x02
@@ -68,36 +42,28 @@
 #define SOFT_I2C_RETURN_SLAR_ACK		0x06
 #define SOFT_I2C_RETURN_SLAR_NOACK		0x07
 #define SOFT_I2C_RETURN_DATA_RX_ACK		0x08
-#define SOFT_I2C_RETURN_DATA_RX_NOACK	0x09*/
+#define SOFT_I2C_RETURN_DATA_RX_NOACK	0x09
+*/
 
 #define SOFT_I2C_RETURN_PARAMETER_ERROR	0xFE
 
+//Checks is the status is ok, and returns if not
+#define CheckStat(stat)  do {	if(stat != SOFT_I2C_RETURN_OK) {	\
+								I2CSoft_SendStop();					\
+								printf("Fail: %d\n", stat);			\
+								return stat; }} while ( 0 )
+
+
+
 #define SOFT_I2C_TU_COUNT				25
-
-//Internal global variables for interrupt routine
-/*volatile uint8_t I2C_Soft_BusInUse;						//Set to 1 if the bus is in use, check this before starting communication
-volatile uint8_t I2C_Soft_SLA;							//Address of slave device
-volatile uint8_t I2C_Soft_TX_Size;						//Number of bytes to transmit
-volatile uint8_t I2C_Soft_TX_Bufffer[I2C_BUFFER_SIZE];	//Transmit buffer
-volatile uint8_t I2C_Soft_RX_Size;						//Number of bytes to recieve
-volatile uint8_t I2C_Soft_RX_Bufffer[I2C_BUFFER_SIZE];	//Recieve buffer
-
-volatile uint8_t I2C_Soft_IntCounter;
-volatile uint8_t I2C_Soft_Status;*/
-
-
-//volatile uint8_t I2C_Soft_Status;
-
-
 
 //Internal functions
 uint8_t I2CSoft_Int_Handler(void);
 
-
-void I2CSoft_Delay_TU(void);
-
-
-
+/**This function generates short delays and is used for timing of the I2C bus. 
+   The I2C bus speed period will be roughly four times the duration of this function.
+   This function is declared weak, and can therefore be overridden by a user function */
+void I2CSoft_Delay_TU(void) __attribute__((weak));
 
 void I2CSoft_SDA_Set(void);				//Sets (pulls low) the SDA line
 void I2CSoft_SCL_Set(void);				//Sets (pulls low) the SCL line
@@ -106,44 +72,24 @@ uint8_t I2CSoft_SCL_Release(void);		//releases (allows to float high) the SCL li
 
 static inline uint8_t I2CSoft_SendStart(uint8_t RS);
 static inline uint8_t I2CSoft_SendStop(void);
-
 static inline uint8_t I2CSoft_WriteByte(uint8_t ByteToWrite);
 static inline uint8_t I2CSoft_ReadByte(uint8_t *ByteToRead, uint8_t SendAck);
 
 //Initalizes the hardware and variables
 // Note: Gloabal interrupts are not enabled here, they must be enabled for this to work
 inline void I2CSoft_Init(void)
-{
-	//Initalize global variables
-/*	I2C_Soft_BusInUse = 0;
-	I2C_Soft_IntCounter = 0;
-	I2C_Soft_TX_Size = 0;
-	I2C_Soft_RX_Size = 0;*/
-	
+{	
 	//Setup the pins for SCL and SDA
 	I2CSoft_SDA_Release();
 	I2CSoft_SCL_Release();	
-	
-	//Setup 16-bit timer 1 for 1us timing
-	//TCCR1A = 0x00;		//CTC Mode
-	//TCCR1B = 0x08;		//CTC Mode, clock stopped
-	//OCR1AH = 0x00;
-	//OCR1AL = 0x14;		//At 8MHz, 20(0x14) clock cycles equal 2.5us 0xC8
-	//TCNT1H = 0x00;
-	//TCNT1L = 0x00;		//Initalize the timer register to 0
-	//TIMSK1 = 0x02;		//Enable interrupt on output compare A match
 
 	return;
 }
-
-
 
 uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t BytesToSend, uint8_t BytesToRecieve)
 {
 	uint8_t stat;
 	uint8_t i;
-	
-	//verify stuff here?
 
 	//Send start
 	stat = I2CSoft_SendStart(0);
@@ -188,105 +134,7 @@ uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t
 	
 	//Send Stop
 	stat = I2CSoft_SendStop();
-	//stat = I2CSoft_SendStop();
 	return stat;
-	
-	
-	/*stat = I2CSoft_WriteByte(byteToSend);
-	stat = I2CSoft_WriteByte(0x04);
-	I2CSoft_SendStart(1);
-	I2CSoft_WriteByte(byteToSend | 0x01);
-	
-	I2CSoft_ReadByte(&tempByte, 0);
-	
-	I2CSoft_SendStop();
-	
-	printf("rec: %d\n", tempByte);
-
-	if(stat == SOFT_I2C_RETURN_OK)
-	{
-		printf_P(PSTR("ack\n"));
-	}
-	else if(stat == SOFT_I2C_RETURN_NOACK)
-	{
-		printf_P(PSTR("no ack\n"));
-	}
-	else
-	{
-		printf_P(PSTR("error\n"));
-	}*/
-	
-	
-	
-	
-	
-	
-	
-	
-	/*-------------------------------------------------------
-	 * the old way
-	 *-------------------------------------------------------
-	//Send start
-	I2CSoft_SDA_Set();
-	I2CSoft_Delay_TU();
-	
-	
-	//Send byte
-	for(uint8_t j = 0; j<BytesToSend+2; j++)
-	{
-		for(uint8_t i = 0; i<8; i++)
-		{
-			//setup phase, clock is low
-			I2CSoft_SCL_Set();
-			I2CSoft_Delay_TU();
-			if(byteToSend & 0x80)	//bit is a one
-			{
-				I2CSoft_SDA_Release();
-			}
-			else	//bit is a zero
-			{
-				I2CSoft_SDA_Set();
-			}
-			byteToSend <<= 1;
-			I2CSoft_Delay_TU();
-			
-			//clock goes high, sample phase
-			I2CSoft_SCL_Release();
-			I2CSoft_Delay_TU();
-			I2CSoft_Delay_TU();
-		}
-		
-		//look for ack
-		I2CSoft_SCL_Set();
-		I2CSoft_Delay_TU();
-		I2CSoft_SDA_Release();
-		I2CSoft_Delay_TU();
-		I2CSoft_SCL_Release();
-		I2CSoft_Delay_TU();
-		ack = (I2C_SDA_PIN & (1<<I2C_SDA_PIN_NUM));
-		I2CSoft_Delay_TU();
-	}
-	
-	//Send stop
-	I2CSoft_SCL_Set();
-	I2CSoft_Delay_TU();
-
-	I2CSoft_SDA_Set();
-	I2CSoft_Delay_TU();
-	
-	//I2CSoft_Delay_TU();
-	I2CSoft_SCL_Release();
-	I2CSoft_Delay_TU();
-	I2CSoft_SDA_Release();
-
-
-	return ack;	*/
-	
-	
-	
-	
-	
-	
 }
 
 

@@ -31,34 +31,32 @@
 #ifndef _I2C_SOFT_H_
 #define _I2C_SOFT_H_
 
+#include "stdint.h"
+#include "config.h"
 
-//---------------------------------------------------
-//Setup for the I2C software driver
-//---------------------------------------------------
-#define I2C_SOFT_USE_INTERNAL_PULLUPS		1		//Set to 1 to use internal pullups on the pins
-#define I2C_SOFT_USE_ARBITRATION			1		//Set to 1 to enable arbitration
-#define I2C_SOFT_USE_CLOCK_STRETCH			1		//Set to 1 to enable clock stretching detection
-#define I2C_SOFT_CLOCK_STRETCH_TIMEOUT		1000	//The timeout for the clock stretching, this is a 16-bit number
+#ifndef I2C_SOFT_USER_CONFIG
+	#error: I2C software driver settings not defined. See i2c_soft.h for details.
+#endif
 
-
-
-//#define I2C_BUFFER_SIZE				16		//The maximum number of bytes that can be sent over I2C in a single transaction
-
-
-
-//SDA and SCL pin defintions
-#define I2C_SDA_PORT		PORTC
-#define I2C_SDA_DDR			DDRC
-#define I2C_SDA_PIN			PINC
-#define I2C_SDA_PIN_NUM		6
-
-#define I2C_SCL_PORT		PORTB
-#define I2C_SCL_DDR			DDRB
-#define I2C_SCL_PIN			PINB
-#define I2C_SCL_PIN_NUM		7
-//---------------------------------------------------
-//Nothing past this point should need to be modified
-//---------------------------------------------------
+/*These setting must be defined in your user code to use the software I2C module
+ * #define I2C_SOFT_USER_CONFIG				//Define this in your user code to disable the above error.
+ *
+ * Function setup
+ * #define I2C_SOFT_USE_INTERNAL_PULLUPS	1		//Set to 1 to use internal pullups on the pins
+ * #define I2C_SOFT_USE_ARBITRATION			1		//Set to 1 to enable arbitration
+ * #define I2C_SOFT_USE_CLOCK_STRETCH		1		//Set to 1 to enable clock stretching detection
+ * #define I2C_SOFT_CLOCK_STRETCH_TIMEOUT	1000	//The timeout for the clock stretching, this is a 16-bit number
+ *
+ *SDA and SCL pin defintions
+ * #define I2C_SDA_PORT			PORTC
+ * #define I2C_SDA_DDR			DDRC
+ * #define I2C_SDA_PIN			PINC
+ * #define I2C_SDA_PIN_NUM		6
+ * #define I2C_SCL_PORT			PORTB
+ * #define I2C_SCL_DDR			DDRB
+ * #define I2C_SCL_PIN			PINB
+ * #define I2C_SCL_PIN_NUM		7
+ */
 
 //External functions
 void I2CSoft_Init(void);
