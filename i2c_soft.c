@@ -25,8 +25,8 @@
 
 #include "i2c_soft.h"
 #include <avr/io.h>
+#include <avr/pgmspace.h>
 #include <stdio.h>
-
 
 //I2C return codes
 #define SOFT_I2C_RETURN_OK				0x00
@@ -135,6 +135,43 @@ uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t
 	//Send Stop
 	stat = I2CSoft_SendStop();
 	return stat;
+}
+
+
+void I2CSoft_Scan(void)
+{
+	uint8_t i;
+	uint8_t stat;
+	
+	for(i=0; i<0x8F; i++)
+	{
+		//Send start
+		stat = I2CSoft_SendStart(0);
+		if(stat != SOFT_I2C_RETURN_OK)
+		{
+			printf_P(PSTR("Error sending start\n"));
+			return;
+		}
+		
+		//Send device address
+		stat = I2CSoft_WriteByte(i<<1);
+		if(stat == SOFT_I2C_RETURN_OK)
+		{
+			printf_P(PSTR("Device responded at address 0x%02X\n"), i);
+		}
+		
+		//Send Stop
+		stat = I2CSoft_SendStop();
+		if(stat != SOFT_I2C_RETURN_OK)
+		{
+			printf_P(PSTR("Error sending stop\n"));
+			return;
+		}
+		
+		//Wait a bit
+		I2CSoft_Delay_TU();
+		I2CSoft_Delay_TU();
+	}
 }
 
 

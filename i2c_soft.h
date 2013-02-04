@@ -61,6 +61,7 @@
 //External functions
 void I2CSoft_Init(void);
 uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t BytesToSend, uint8_t BytesToRecieve);
+void I2CSoft_Scan(void);
 
 
 
