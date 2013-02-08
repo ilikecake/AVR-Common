@@ -137,6 +137,25 @@ uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t
 	return stat;
 }
 
+uint8_t I2CSoft_WaitForAck(uint8_t sla)
+{
+	uint8_t stat = SOFT_I2C_RETURN_NOACK;
+	uint8_t i = 0;
+
+	while((stat != SOFT_I2C_RETURN_OK) && i < 10000))
+	{
+		//Send start
+		I2CSoft_SendStart(0);
+	
+		//See if device responds to read request
+		stat = I2CSoft_WriteByte((sla<<1) | 1);
+		
+		//For timeout
+		i++;
+	}
+
+	return 0x00;
+}
 
 void I2CSoft_Scan(void)
 {
@@ -467,3 +486,5 @@ uint8_t I2CSoft_SCL_Release(void)
 #endif
 	return ((I2C_SCL_PIN >> I2C_SCL_PIN_NUM) & 0x01);
 }	
+
+/** @} */

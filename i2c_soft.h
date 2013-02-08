@@ -58,12 +58,32 @@
  * #define I2C_SCL_PIN_NUM		7
  */
 
-//External functions
+/** Initalize the I2C Software pins */
 void I2CSoft_Init(void);
+
+/** Read/write data on the I2C line
+*	\param[in] sla The 7-bit slave address of the I2C device.
+*	\param[in] *SendData A pointer to the data to send to the device.
+*	\param[in] *RecieveData A pointer to the data to receive from the device.
+*	\param[in] BytesToSend The number of bytes to send.
+*	\param[in] BytesToRecieve The number of bytes to receive.
+*
+*	\return The I2C status (0x00 for OK)
+*/
 uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t BytesToSend, uint8_t BytesToRecieve);
+
+/** Wait for a device to become ready by repeatedly sending the device address and looking for an ACK from the device.
+*	\param[in] sla The 7-bit slave address of the I2C device.
+*
+*	\return The I2C status (0x00 for OK)
+*/
+uint8_t I2CSoft_WaitForAck(uint8_t sla);
+
+/** Scans the I2C address space and prints out the devices found */
 void I2CSoft_Scan(void);
 
 
 
 #endif
 
+/** @} */
