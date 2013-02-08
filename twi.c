@@ -39,7 +39,7 @@ void InitTWI(void)
 	#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 		PRR &= ~(1<<PRTWI);						//Turn on TWI power
 	#elif defined (__AVR_ATmega32U4__)
-		PRR0 &= ~(1<<PRTWI);						//Turn on TWI power
+		PRR0 &= ~(1<<PRTWI);					//Turn on TWI power
 	#else
 		#error: MCU not defined/handled
 	#endif
