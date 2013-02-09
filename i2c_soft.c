@@ -140,7 +140,7 @@ uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t
 uint8_t I2CSoft_WaitForAck(uint8_t sla)
 {
 	uint8_t stat = SOFT_I2C_RETURN_NOACK;
-	uint8_t i = 0;
+	uint16_t i = 0;
 
 	while((stat != SOFT_I2C_RETURN_OK) && i < 10000))
 	{
