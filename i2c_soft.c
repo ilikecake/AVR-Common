@@ -142,7 +142,7 @@ uint8_t I2CSoft_WaitForAck(uint8_t sla)
 	uint8_t stat = SOFT_I2C_RETURN_NOACK;
 	uint16_t i = 0;
 
-	while((stat != SOFT_I2C_RETURN_OK) && i < 10000))
+	while((stat != SOFT_I2C_RETURN_OK) && i < 10000)
 	{
 		//Send start
 		I2CSoft_SendStart(0);
