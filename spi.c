@@ -16,8 +16,8 @@
 *	\brief		SPI hardware driver for Atmel AVR8 CPUs
 *	\author		Pat Satyshur
 *	\version	1.0
-*	\date		12/8/2012
-*	\copyright	Copyright 2012, Pat Satyshur
+*	\date		2/15/2013
+*	\copyright	Copyright 2013, Pat Satyshur
 *	\ingroup 	interface
 *
 *	@{
