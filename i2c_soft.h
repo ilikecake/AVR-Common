@@ -18,9 +18,7 @@
 *	\version	1.0
 *	\date		2/3/2013
 *	\copyright	Copyright 2013, Pat Satyshur
-*	\ingroup 	hardware
-*
-*	\defgroup	I2C Driver
+*	\ingroup 	common
 *
 *	@{
 */
@@ -57,6 +55,25 @@
  * #define I2C_SCL_PIN			PINB
  * #define I2C_SCL_PIN_NUM		7
  */
+
+//These status codes are based on the status codes from the atmel AVR8s
+//Except that code 0x00 means all is well
+#define SOFT_I2C_STAT_OK				0x00
+#define SOFT_I2C_STAT_START				0x08
+#define SOFT_I2C_STAT_RSTART			0x10
+#define SOFT_I2C_STAT_SLAW_ACK			0x18
+#define SOFT_I2C_STAT_SLAW_NOACK		0x20
+#define SOFT_I2C_STAT_DATA_TX_ACK		0x28
+#define SOFT_I2C_STAT_DATA_TX_NOACK		0x30
+#define SOFT_I2C_STAT_ARB_LOST			0x38
+
+#define SOFT_I2C_STAT_SLAR_ACK			0x40
+#define SOFT_I2C_STAT_SLAR_NOACK		0x48
+#define SOFT_I2C_STAT_DATA_RX_ACK		0x50
+#define SOFT_I2C_STAT_DATA_RX_NOACK		0x58
+
+#define SOFT_I2C_STAT_PARAMETER_ERROR	0xAE
+#define SOFT_I2C_STAT_BUS_ERROR			0xAF
 
 /** Initalize the I2C Software pins */
 void I2CSoft_Init(void);

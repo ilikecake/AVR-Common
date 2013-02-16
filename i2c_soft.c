@@ -18,7 +18,7 @@
 *	\version	1.0
 *	\date		2/3/2013
 *	\copyright	Copyright 2013, Pat Satyshur
-*	\ingroup 	hardware
+*	\ingroup 	common
 *
 *	@{
 */
@@ -28,58 +28,7 @@
 #include <avr/pgmspace.h>
 #include <stdio.h>
 
-//I2C return codes
-//#define SOFT_I2C_RETURN_OK				0x00
-//#define SOFT_I2C_RETURN_NOACK			0x01
-//#define SOFT_I2C_RETURN_ARB_LOST		0x40
-//#define SOFT_I2C_RETURN_BUS_ERROR		0x80
-
-
-//These status codes are based on the status codes from the atmel AVR8s
-//Except that code 0x00 means all is well
-
-#define SOFT_I2C_STAT_OK				0x00
-#define SOFT_I2C_STAT_START				0x08
-#define SOFT_I2C_STAT_RSTART			0x10
-#define SOFT_I2C_STAT_SLAW_ACK			0x18
-#define SOFT_I2C_STAT_SLAW_NOACK		0x20
-#define SOFT_I2C_STAT_DATA_TX_ACK		0x28
-#define SOFT_I2C_STAT_DATA_TX_NOACK		0x30
-#define SOFT_I2C_STAT_ARB_LOST			0x38
-
-#define SOFT_I2C_STAT_SLAR_ACK			0x40
-#define SOFT_I2C_STAT_SLAR_NOACK		0x48
-#define SOFT_I2C_STAT_DATA_RX_ACK		0x50
-#define SOFT_I2C_STAT_DATA_RX_NOACK		0x58
-#define SOFT_I2C_STAT_PARAMETER_ERROR	0xFE
-#define SOFT_I2C_STAT_BUS_ERROR			0xFF
-
-
-
-
-
-/*
-#define SOFT_I2C_RETURN_OK				0x00
-#define SOFT_I2C_RETURN_SLAW_ACK		0x02
-#define SOFT_I2C_RETURN_SLAW_NOACK		0x03
-#define SOFT_I2C_RETURN_DATA_TX_ACK		0x04
-#define SOFT_I2C_RETURN_DATA_TX_NOACK	0x05
-#define SOFT_I2C_RETURN_SLAR_ACK		0x06
-#define SOFT_I2C_RETURN_SLAR_NOACK		0x07
-#define SOFT_I2C_RETURN_DATA_RX_ACK		0x08
-#define SOFT_I2C_RETURN_DATA_RX_NOACK	0x09
-*/
-
-//#define SOFT_I2C_RETURN_PARAMETER_ERROR	0xFE
-
-//Checks is the status is ok, and returns if not
-#define CheckStat(stat)  do {	if(stat != SOFT_I2C_RETURN_OK) {			\
-								I2CSoft_SendStop();							\
-								printf_P(PSTR("Fail: %d\n"), stat);			\
-								return stat; }} while ( 0 )
-
-
-
+/** Determines timing for the internal delay generator. A smaller value here will increase the speed of the I2C clock. However, to small of a value will probably make the clock uneven */
 #define SOFT_I2C_TU_COUNT				25
 
 //Internal functions
@@ -123,7 +72,6 @@ uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t
 		I2CSoft_SendStop();
 		return stat;
 	}
-	//CheckStat(stat);
 	
 	//Send data to device
 	if(BytesToSend > 0)
@@ -154,13 +102,12 @@ uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t
 		}
 		if(BytesToRecieve > 0)
 		{
-			stat = I2CSoft_SendStart(1);
-			if(stat != SOFT_I2C_STAT_RSTART);
+			stat = I2CSoft_SendStart(1);	
+			if(stat != SOFT_I2C_STAT_RSTART)
 			{
 				I2CSoft_SendStop();
 				return stat;
 			}
-			//CheckStat(stat);
 		}
 	}
 
