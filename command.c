@@ -66,7 +66,7 @@ static void SaveOldCommand(void);
 //---------------------------------------------------------------------------------------------
 //Common commands are defined here
 //---------------------------------------------------------------------------------------------
-uint8_t NumCommonCommands = 3;	//Total number of common commands
+uint8_t NumCommonCommands = 2;	//Total number of common commands
 
 //Help Function
 static int HELP_C (void);
@@ -80,17 +80,10 @@ const char _F2_NAME_COMMON[] PROGMEM 			= "stat";
 const char _F2_DESCRIPTION_COMMON[] PROGMEM 	= "Show Status of CPU";
 const char _F2_HELPTEXT_COMMON[] PROGMEM 		= "'stat' has no parameters" ;
 
-//CPU Status Function
-static int IDENT_C (void);
-const char _F3_NAME_COMMON[] PROGMEM 			= "ident";
-const char _F3_DESCRIPTION_COMMON[] PROGMEM 	= "Identify program version";
-const char _F3_HELPTEXT_COMMON[] PROGMEM 		= "'ident' has no parameters" ;
-
 static const CommandListItem CommonCommandList[] PROGMEM =
 {
 	{ _F1_NAME_COMMON, 0,  1, HELP_C,	_F1_DESCRIPTION_COMMON, _F1_HELPTEXT_COMMON },
-	{ _F2_NAME_COMMON, 0,  0, STAT_C,	_F2_DESCRIPTION_COMMON, _F2_HELPTEXT_COMMON },
-	{ _F3_NAME_COMMON, 0,  0, IDENT_C,	_F3_DESCRIPTION_COMMON, _F3_HELPTEXT_COMMON }
+	{ _F2_NAME_COMMON, 0,  0, STAT_C,	_F2_DESCRIPTION_COMMON, _F2_HELPTEXT_COMMON }
 };
 //---------------------------------------------------------------------------------------------
 //End of common command definitions
@@ -586,11 +579,5 @@ static int STAT_C (void)
 	printf_P(fwCompileDate);
 	#endif
 	return 0;
-}
-
-static int IDENT_C (void)
-{
-	return 0;
-	//printf_P(PSTR("%s, %s\n"), 
 }
 /** @} */
