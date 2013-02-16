@@ -560,8 +560,9 @@ static int STAT_C (void)
 	printf_P(PSTR("Device Status:\n"));
 	printf_P(PSTR("--------------------------------------------------\n"));
 	
-	
-	//printf("Free memory: %d\n", StackCount());
+	#if COMMAND_STAT_SHOW_MEM_USAGE == 1
+	printf_P(PSTR("Free memory: %d bytes\n"), StackCount());
+	#endif
 	/*
 	printf_P(PSTR("Clocks:\n"));
 	printf("CLKSEL0: %d\n", CLKSEL0);
@@ -575,7 +576,7 @@ static int STAT_C (void)
 	printf("SPCR: %d\n",SPCR);
 	printf("SPSR: %d\n",SPSR);*
 	*/
-	#if COMMAND_USE_COMPILE_STRING == 1
+	#if COMMAND_STAT_SHOW_COMPILE_STRING == 1
 	printf_P(fwCompileDate);
 	#endif
 	return 0;
