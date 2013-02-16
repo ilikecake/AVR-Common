@@ -28,6 +28,17 @@
 
 //Includes
 #include "stdint.h"
+#include "config.h"
+
+#ifndef COMMAND_USER_CONFIG
+	#error: Command interpreter settings not defined. See command.h for details.
+#endif
+
+/*These setting must be defined in your user code to use the command interpreter module
+ * #define COMMAND_USER_CONFIG							//Define this in your user code to disable the above error.
+ * #define COMMAND_USE_COMPILE_STRING			1		//Set to 1 to output the compile date/time string in the stat function
+ * extern const char fwCompileDate[] PROGMEM;			//The compile date/time string. This must be a string in flash called fwCompileDate.
+ */
 
 #define COMMAND_MAX_DISPLAY_LENGTH	10
 
