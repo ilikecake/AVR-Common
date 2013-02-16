@@ -416,11 +416,11 @@ int32_t argAsInt(uint8_t argNum)
 			}
 			else if((CurrentCommandArray[argNum][i] > 96) && (CurrentCommandArray[argNum][i] < 103))	//lower case a through f
 			{
-				valToReturn = valToReturn*16+(10+CurrentCommandArray[argNum-1][i]-97);
+				valToReturn = valToReturn*16+(10+CurrentCommandArray[argNum][i]-97);
 			}
 			else if((CurrentCommandArray[argNum][i] > 64) && (CurrentCommandArray[argNum][i] < 71))	//upper case A through F
 			{
-				valToReturn = valToReturn*16+(10+CurrentCommandArray[argNum-1][i]-65);
+				valToReturn = valToReturn*16+(10+CurrentCommandArray[argNum][i]-65);
 			}
 			else if((CurrentCommandArray[argNum][i] > 47) && (CurrentCommandArray[argNum][i] < 58))	//0 through 9
 			{
@@ -551,8 +551,6 @@ static int HELP_C (void)
 	}
 	return 0;
 }
-
-
 
 static int STAT_C (void)
 {
