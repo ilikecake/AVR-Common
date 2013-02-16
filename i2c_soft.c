@@ -29,12 +29,37 @@
 #include <stdio.h>
 
 //I2C return codes
-#define SOFT_I2C_RETURN_OK				0x00
-#define SOFT_I2C_RETURN_NOACK			0x01
-#define SOFT_I2C_RETURN_ARB_LOST		0x40
-#define SOFT_I2C_RETURN_BUS_ERROR		0x80
+//#define SOFT_I2C_RETURN_OK				0x00
+//#define SOFT_I2C_RETURN_NOACK			0x01
+//#define SOFT_I2C_RETURN_ARB_LOST		0x40
+//#define SOFT_I2C_RETURN_BUS_ERROR		0x80
+
+
+//These status codes are based on the status codes from the atmel AVR8s
+//Except that code 0x00 means all is well
+
+#define SOFT_I2C_STAT_OK				0x00
+#define SOFT_I2C_STAT_START				0x08
+#define SOFT_I2C_STAT_RSTART			0x10
+#define SOFT_I2C_STAT_SLAW_ACK			0x18
+#define SOFT_I2C_STAT_SLAW_NOACK		0x20
+#define SOFT_I2C_STAT_DATA_TX_ACK		0x28
+#define SOFT_I2C_STAT_DATA_TX_NOACK		0x30
+#define SOFT_I2C_STAT_ARB_LOST			0x38
+
+#define SOFT_I2C_STAT_SLAR_ACK			0x40
+#define SOFT_I2C_STAT_SLAR_NOACK		0x48
+#define SOFT_I2C_STAT_DATA_RX_ACK		0x50
+#define SOFT_I2C_STAT_DATA_RX_NOACK		0x58
+#define SOFT_I2C_STAT_PARAMETER_ERROR	0xFE
+#define SOFT_I2C_STAT_BUS_ERROR			0xFF
+
+
+
+
 
 /*
+#define SOFT_I2C_RETURN_OK				0x00
 #define SOFT_I2C_RETURN_SLAW_ACK		0x02
 #define SOFT_I2C_RETURN_SLAW_NOACK		0x03
 #define SOFT_I2C_RETURN_DATA_TX_ACK		0x04
@@ -45,12 +70,12 @@
 #define SOFT_I2C_RETURN_DATA_RX_NOACK	0x09
 */
 
-#define SOFT_I2C_RETURN_PARAMETER_ERROR	0xFE
+//#define SOFT_I2C_RETURN_PARAMETER_ERROR	0xFE
 
 //Checks is the status is ok, and returns if not
-#define CheckStat(stat)  do {	if(stat != SOFT_I2C_RETURN_OK) {	\
-								I2CSoft_SendStop();					\
-								printf("Fail: %d\n", stat);			\
+#define CheckStat(stat)  do {	if(stat != SOFT_I2C_RETURN_OK) {			\
+								I2CSoft_SendStop();							\
+								printf_P(PSTR("Fail: %d\n"), stat);			\
 								return stat; }} while ( 0 )
 
 
@@ -93,24 +118,49 @@ uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t
 
 	//Send start
 	stat = I2CSoft_SendStart(0);
-	CheckStat(stat);
+	if(stat != SOFT_I2C_STAT_START)
+	{
+		I2CSoft_SendStop();
+		return stat;
+	}
+	//CheckStat(stat);
 	
 	//Send data to device
 	if(BytesToSend > 0)
 	{
 		//Send device address
 		stat = I2CSoft_WriteByte(sla<<1);
-		CheckStat(stat);
+		if(stat != SOFT_I2C_STAT_DATA_TX_ACK)
+		{
+			I2CSoft_SendStop();
+			if(stat == SOFT_I2C_STAT_DATA_TX_NOACK)
+			{
+				return SOFT_I2C_STAT_SLAW_NOACK;
+			}
+			else
+			{
+				return stat;
+			}
+		}
 		
 		for(i=0; i<BytesToSend; i++)
 		{
 			stat = I2CSoft_WriteByte(SendData[i]);
-			CheckStat(stat);
+			if(stat != SOFT_I2C_STAT_DATA_TX_ACK)
+			{
+				I2CSoft_SendStop();
+				return stat;
+			}
 		}
 		if(BytesToRecieve > 0)
 		{
 			stat = I2CSoft_SendStart(1);
-			CheckStat(stat);
+			if(stat != SOFT_I2C_STAT_RSTART);
+			{
+				I2CSoft_SendStop();
+				return stat;
+			}
+			//CheckStat(stat);
 		}
 	}
 
@@ -118,18 +168,36 @@ uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t
 	{
 		//Send device address
 		stat = I2CSoft_WriteByte((sla << 1) | 0x01);
-		CheckStat(stat);
+		if(stat != SOFT_I2C_STAT_DATA_TX_ACK)
+		{
+			I2CSoft_SendStop();
+			if(stat == SOFT_I2C_STAT_DATA_TX_NOACK)
+			{
+				return SOFT_I2C_STAT_SLAR_NOACK;
+			}
+			else
+			{
+				return stat;
+			}
+		}
 	
 		for(i=0; i<BytesToRecieve-1; i++)
 		{
-			//printf_P(PSTR("acking read\n"));
+			//More data to receive, send ACK
 			stat = I2CSoft_ReadByte(&RecieveData[i], 1);
-			CheckStat(stat);
+			if(stat != SOFT_I2C_STAT_DATA_RX_ACK)
+			{
+				I2CSoft_SendStop();
+				return stat;
+			}
 		}
-		
-		//printf_P(PSTR("noacking read\n"));
+		//Last byte of data to read, don't send ACK
 		stat = I2CSoft_ReadByte(&RecieveData[BytesToRecieve-1], 0);
-		CheckStat(stat);
+		if(stat != SOFT_I2C_STAT_DATA_RX_NOACK)
+		{
+			I2CSoft_SendStop();
+			return stat;
+		}
 	}
 	
 	//Send Stop
@@ -139,13 +207,18 @@ uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t
 
 uint8_t I2CSoft_WaitForAck(uint8_t sla)
 {
-	uint8_t stat = SOFT_I2C_RETURN_NOACK;
+	uint8_t stat = 0xFF;
 	uint16_t i = 0;
 
-	while((stat != SOFT_I2C_RETURN_OK) && i < 10000)
+	while((stat != SOFT_I2C_STAT_DATA_TX_ACK) && i < 10000)
 	{
 		//Send start
-		I2CSoft_SendStart(0);
+		stat = I2CSoft_SendStart(0);
+		if(stat != SOFT_I2C_STAT_START)
+		{
+			I2CSoft_SendStop();
+			return stat;
+		}
 	
 		//See if device responds to read request
 		stat = I2CSoft_WriteByte((sla<<1) | 1);
@@ -153,7 +226,7 @@ uint8_t I2CSoft_WaitForAck(uint8_t sla)
 		//For timeout
 		i++;
 	}
-
+	
 	return 0x00;
 }
 
@@ -166,7 +239,7 @@ void I2CSoft_Scan(void)
 	{
 		//Send start
 		stat = I2CSoft_SendStart(0);
-		if(stat != SOFT_I2C_RETURN_OK)
+		if(stat != SOFT_I2C_STAT_START)
 		{
 			printf_P(PSTR("Error sending start\n"));
 			return;
@@ -174,14 +247,14 @@ void I2CSoft_Scan(void)
 		
 		//Send device address
 		stat = I2CSoft_WriteByte(i<<1);
-		if(stat == SOFT_I2C_RETURN_OK)
+		if(stat == SOFT_I2C_STAT_DATA_TX_ACK)
 		{
 			printf_P(PSTR("Device responded at address 0x%02X\n"), i);
 		}
 		
 		//Send Stop
 		stat = I2CSoft_SendStop();
-		if(stat != SOFT_I2C_RETURN_OK)
+		if(stat != SOFT_I2C_STAT_OK)
 		{
 			printf_P(PSTR("Error sending stop\n"));
 			return;
@@ -192,7 +265,6 @@ void I2CSoft_Scan(void)
 		I2CSoft_Delay_TU();
 	}
 }
-
 
 static inline uint8_t I2CSoft_SendStart(uint8_t RS)
 {
@@ -212,7 +284,7 @@ static inline uint8_t I2CSoft_SendStart(uint8_t RS)
 			i++;
 			if(i > I2C_SOFT_CLOCK_STRETCH_TIMEOUT)
 			{
-				return SOFT_I2C_RETURN_BUS_ERROR;
+				return SOFT_I2C_STAT_BUS_ERROR;
 			}
 		}
 		#else
@@ -226,7 +298,7 @@ static inline uint8_t I2CSoft_SendStart(uint8_t RS)
 	//Lost arbitration
 	if(I2CSoft_SDA_Release() == 0)
 	{
-		return SOFT_I2C_RETURN_ARB_LOST;
+		return SOFT_I2C_STAT_ARB_LOST;
 	}
 	#else
 	I2CSoft_SDA_Release()
@@ -235,7 +307,12 @@ static inline uint8_t I2CSoft_SendStart(uint8_t RS)
 	I2CSoft_SDA_Set();
 	I2CSoft_Delay_TU();
 	I2CSoft_SCL_Set();
-	return SOFT_I2C_RETURN_OK;
+	
+	if(RS)
+	{
+		return SOFT_I2C_STAT_RSTART;
+	}
+	return SOFT_I2C_STAT_START;
 
 }
 
@@ -255,7 +332,7 @@ static inline uint8_t I2CSoft_SendStop(void)
 		i++;
 		if(i > I2C_SOFT_CLOCK_STRETCH_TIMEOUT)
 		{
-			return SOFT_I2C_RETURN_BUS_ERROR;
+			return SOFT_I2C_STAT_BUS_ERROR;
 		}
 	}
 	#else
@@ -269,13 +346,15 @@ static inline uint8_t I2CSoft_SendStop(void)
 	I2CSoft_Delay_TU();
 	if(I2CSoft_SDA_Release() == 0)
 	{
-		return SOFT_I2C_RETURN_ARB_LOST;
+		return SOFT_I2C_STAT_ARB_LOST;
 	}
 	#endif
 
-	return SOFT_I2C_RETURN_OK;
+	return SOFT_I2C_STAT_OK;
 }
 
+
+//This function will return DATA TX ACK/NOACK only
 static inline uint8_t I2CSoft_WriteByte(uint8_t ByteToWrite)
 {
 	uint8_t i = 0;
@@ -305,7 +384,7 @@ static inline uint8_t I2CSoft_WriteByte(uint8_t ByteToWrite)
 			j++;
 			if(j > I2C_SOFT_CLOCK_STRETCH_TIMEOUT)
 			{
-				return SOFT_I2C_RETURN_BUS_ERROR;
+				return SOFT_I2C_STAT_BUS_ERROR;
 			}
 		}
 		#else
@@ -320,7 +399,7 @@ static inline uint8_t I2CSoft_WriteByte(uint8_t ByteToWrite)
 		{
 			if(I2CSoft_SDA_Release() == 0)
 			{
-				return SOFT_I2C_RETURN_ARB_LOST;
+				return SOFT_I2C_STAT_ARB_LOST;
 			}
 		}
 		#endif
@@ -346,7 +425,7 @@ static inline uint8_t I2CSoft_WriteByte(uint8_t ByteToWrite)
 		j++;
 		if(j > I2C_SOFT_CLOCK_STRETCH_TIMEOUT)
 		{
-			return SOFT_I2C_RETURN_BUS_ERROR;
+			return SOFT_I2C_STAT_BUS_ERROR;
 		}
 	}
 	#else
@@ -360,9 +439,9 @@ static inline uint8_t I2CSoft_WriteByte(uint8_t ByteToWrite)
 
 	if(i == 0)
 	{
-		return SOFT_I2C_RETURN_OK;
+		return SOFT_I2C_STAT_DATA_TX_ACK;
 	}
-	return SOFT_I2C_RETURN_NOACK;
+	return SOFT_I2C_STAT_DATA_TX_NOACK;
 }
 
 static inline uint8_t I2CSoft_ReadByte(uint8_t *ByteToRead, uint8_t SendAck)
@@ -387,7 +466,7 @@ static inline uint8_t I2CSoft_ReadByte(uint8_t *ByteToRead, uint8_t SendAck)
 			j++;
 			if(j > I2C_SOFT_CLOCK_STRETCH_TIMEOUT)
 			{
-				return SOFT_I2C_RETURN_BUS_ERROR;
+				return SOFT_I2C_STAT_BUS_ERROR;
 			}
 		}
 		#else
@@ -426,7 +505,7 @@ static inline uint8_t I2CSoft_ReadByte(uint8_t *ByteToRead, uint8_t SendAck)
 		j++;
 		if(j > I2C_SOFT_CLOCK_STRETCH_TIMEOUT)
 		{
-			return SOFT_I2C_RETURN_BUS_ERROR;
+			return SOFT_I2C_STAT_BUS_ERROR;
 		}
 	}
 #else
@@ -437,7 +516,14 @@ static inline uint8_t I2CSoft_ReadByte(uint8_t *ByteToRead, uint8_t SendAck)
 	I2CSoft_Delay_TU();
 	I2CSoft_SCL_Set();
 
-	return SOFT_I2C_RETURN_OK;
+	if(SendAck > 0)
+	{
+		return SOFT_I2C_STAT_DATA_RX_ACK;
+	}
+	else
+	{
+		return SOFT_I2C_STAT_DATA_RX_NOACK;
+	}
 }
 
 
