@@ -152,31 +152,6 @@ uint8_t I2CSoft_RW(uint8_t sla, uint8_t *SendData, uint8_t *RecieveData, uint8_t
 	return stat;
 }
 
-uint8_t I2CSoft_WaitForAck(uint8_t sla)
-{
-	uint8_t stat = 0xFF;
-	uint16_t i = 0;
-
-	while((stat != SOFT_I2C_STAT_DATA_TX_ACK) && i < 10000)
-	{
-		//Send start
-		stat = I2CSoft_SendStart(0);
-		if(stat != SOFT_I2C_STAT_START)
-		{
-			I2CSoft_SendStop();
-			return stat;
-		}
-	
-		//See if device responds to read request
-		stat = I2CSoft_WriteByte((sla<<1) | 1);
-		
-		//For timeout
-		i++;
-	}
-	
-	return 0x00;
-}
-
 void I2CSoft_Scan(void)
 {
 	uint8_t i;
