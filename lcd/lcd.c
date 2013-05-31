@@ -404,10 +404,24 @@ void lcd_gotoxy(uint8_t x, uint8_t y)
 
 
 /*************************************************************************
+Return the current address counter
 *************************************************************************/
-int lcd_getxy(void)
+uint8_t lcd_getcurrentaddress(void)
 {
     return lcd_waitbusy();
+}
+
+/*************************************************************************
+Read character at a specified position
+Input:    x  horizontal position  (0: left most position)
+          y  vertical position    (0: first line)
+Returns:  character code
+*************************************************************************/
+uint8_t lcd_getxy(uint8_t x, uint8_t y)
+{
+	lcd_gotoxy(x, y);
+	lcd_waitbusy();
+	return lcd_read(1);
 }
 
 
