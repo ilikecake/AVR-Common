@@ -371,7 +371,6 @@ void lcd_data(uint8_t data)
 }
 
 
-
 /*************************************************************************
 Set cursor to specified position
 Input:    x  horizontal position  (0: left most position)
@@ -401,6 +400,31 @@ void lcd_gotoxy(uint8_t x, uint8_t y)
 #endif
 
 }/* lcd_gotoxy */
+
+
+/*************************************************************************
+Set cursor to specified address
+Input:    addr  The address to go to
+Returns:  none
+*************************************************************************/
+void lcd_gotoaddress(uint8_t addr)
+{
+	lcd_command((1<<LCD_DDRAM) | addr);
+} /* lcd_gotoaddress */
+
+
+/*************************************************************************
+Read character at a specified position
+Input:    x  horizontal position  (0: left most position)
+          y  vertical position    (0: first line)
+Returns:  character code
+*************************************************************************/
+uint8_t lcd_getcharacterataddress(uint8_t addr)
+{
+	lcd_gotoaddress(addr);
+	lcd_waitbusy();
+	return lcd_read(1);
+}
 
 
 /*************************************************************************
