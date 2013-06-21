@@ -392,7 +392,7 @@ void argAsChar(uint8_t argNum, char *ArgString)
 *	\param[in]	argNum The argument number. Argument numbers start at 1. Setting argNum to 0 will give the command name as an integer, which will probably be useless. Invalid argument number or invalid characters will make the function return 0;
 *	\returns The argNum argument as a up to 32-bit signed integer.
 *	TODO: Fix this to handle negative numbers... (maybe done, test this later)
-*	TODO: Add support for exponentials? (1E3)
+*	TODO: Add support for exponentials? (1E3=1000)
 */
 int32_t argAsInt(uint8_t argNum)
 {
@@ -569,11 +569,11 @@ static int STAT_C (void)
 	printf("CLKPR: %d\n", CLKPR);
 
 	printf("Power Control %d\n",PRR0);
-	
-	printf_P(PSTR("SPI:\n"));
-	printf("SPCR: %d\n",SPCR);
-	printf("SPSR: %d\n",SPSR);*
 	*/
+	printf_P(PSTR("SPI:\n"));
+	printf("SPCR: 0x%02X\n",SPCR);
+	printf("SPSR: 0x%02X\n",SPSR);
+	
 	#if COMMAND_STAT_SHOW_COMPILE_STRING == 1
 	printf_P(fwCompileDate);
 	#endif
