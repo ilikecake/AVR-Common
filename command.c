@@ -146,6 +146,10 @@ void CommandGetInputChar(uint8_t c)
 	//Only recieve characters if the command function is waiting for a command.
 	if((CommandStatus == COMMAND_STATUS_TOP_LEVEL_INPUT) || (CommandStatus == COMMAND_STATUS_SUB_LEVEL_INPUT))
 	{
+		if((c > 64) && (c < 91))	//make the command input case insensitive
+		{
+			c = c + 32;
+		}
 		switch(c)
 		{
 			case 8:		//backspace
