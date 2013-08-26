@@ -43,6 +43,10 @@
  * #define TWI_SCL_FREQ_HZ				//The SCL frequency in Hz (100000 is a good value)
  */
 
+//Chect the TWI status and return if an error occured.
+//Note: this function must be given a variable. The TWI send command cannot be entered directly
+#define TWI_CHECKSTAT(stat) if(stat > 0x00) return stat
+
 #define TWI_BUS_BUSY_TIMEOUT	50000
 
 #ifdef TWI_USE_ISR
