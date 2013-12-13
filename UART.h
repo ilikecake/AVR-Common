@@ -39,8 +39,18 @@
 
 //Function definitions
 #define MYUBRR 			(F_CPU/16/UART_BAUD-1)
-#define UARTRXINTON() 	UCSR0B |= (1<<RXCIE0)
-#define UARTRXINTOFF() 	UCSR0B &= !(1<<RXCIE0)
+
+#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
+	#define UARTRXINTON() 	UCSR0B |= (1<<RXCIE0)
+	#define UARTRXINTOFF() 	UCSR0B &= !(1<<RXCIE0)
+#elif defined (__AVR_ATmega32U4__)
+	#define UARTRXINTON() 	UCSR1B |= (1<<RXCIE1)
+	#define UARTRXINTOFF() 	UCSR1B &= !(1<<RXCIE1)
+#else
+	#error: MCU not defined/handled
+#endif
+
+extern FILE UART_stdout;
 
 void UARTinit(void);
 int UARTPutChar(char c, FILE *stream);
