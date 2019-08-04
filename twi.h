@@ -65,6 +65,8 @@ void DeinitTWI(void);
 uint8_t TWIRW(uint8_t sla, unsigned char *SendData, unsigned char *RecieveData, uint8_t BytesToSend, uint8_t BytesToRecieve);
 
 void TWIScan( void );
+uint8_t TWIDeviceCheck(uint8_t AddressToCheck);
+
 
 #ifdef TWI_USE_ISR
 	#define TWI_CONTROL_ON			0x05

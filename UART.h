@@ -34,6 +34,7 @@
 #endif
 
 //Config Options for UART
+//#define UART_USER_CONFIG
 //#define UART_BAUD 9600
 //#undef UART_ENABLE_LOOPBACK
 
@@ -46,6 +47,23 @@
 #elif defined (__AVR_ATmega32U4__)
 	#define UARTRXINTON() 	UCSR1B |= (1<<RXCIE1)
 	#define UARTRXINTOFF() 	UCSR1B &= !(1<<RXCIE1)
+#elif defined (__AVR_ATmega2561__)
+	#if UART_NUMBER == 0
+		#define UARTRXINTON() 	UCSR0B |= (1<<RXCIE0)
+		#define UARTRXINTOFF() 	UCSR0B &= !(1<<RXCIE0)
+	#elif UART_NUMBER == 1
+		#define UARTRXINTON() 	UCSR1B |= (1<<RXCIE1)
+		#define UARTRXINTOFF() 	UCSR1B &= !(1<<RXCIE1)
+	#elif UART_NUMBER == 2
+		#define UARTRXINTON() 	UCSR2B |= (1<<RXCIE2)
+		#define UARTRXINTOFF() 	UCSR2B &= !(1<<RXCIE2)
+	#elif UART_NUMBER == 3
+		#define UARTRXINTON() 	UCSR3B |= (1<<RXCIE3)
+		#define UARTRXINTOFF() 	UCSR3B &= !(1<<RXCIE3)
+	#else
+		#error: UART number not defined
+	#endif
+
 #else
 	#error: MCU not defined/handled
 #endif

@@ -38,7 +38,7 @@ void InitTWI(void)
 	//This will need to be updated when new controllers are used
 	#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
 		PRR &= ~(1<<PRTWI);						//Turn on TWI power
-	#elif defined (__AVR_ATmega32U4__)
+	#elif defined (__AVR_ATmega32U4__) || defined (__AVR_ATmega2561__)
 		PRR0 &= ~(1<<PRTWI);					//Turn on TWI power
 	#else
 		#error: MCU not defined/handled
@@ -319,7 +319,84 @@ void TWIScan( void )
 	return;
 }
 
+uint8_t TWIDeviceCheck(uint8_t AddressToCheck)
+{
+	uint8_t endLoop;
+	uint16_t i = 0;
+	uint8_t DeviceIsPresent = 0;
 
+
+		endLoop = 0;
+		i = 0;
+		
+		//Make sure the bus is not busy
+		while(TWCR != TWI_CONTROL_ON)
+		{
+			i++;
+			if(i > TWI_BUS_BUSY_TIMEOUT)
+			{
+				#ifdef _TWI_DEBUG
+				printf_P(PSTR("TWI hardware did not become available\n"));
+				#endif
+				return 0x00;
+			}
+		}
+		TWCR = TWI_CONTROL_START;				//Send start
+		
+		while(endLoop == 0)
+		{
+			i = 0;
+			//Wait for operation to complete
+			while( ((TWCR & TWI_CONTROL_INT_MASK) >> 7) == 0)
+			{
+				i++;
+				if(i > TWI_BUS_BUSY_TIMEOUT)
+				{
+					#ifdef _TWI_DEBUG
+					printf_P(PSTR("TWI hardware did not finish\n"));
+					#endif
+					return 0x00;
+				}
+			}
+			
+			//Start next action
+			switch((TWSR & TWI_STATUS_MASK))
+			{
+				case TWI_STATUS_START_TX: 		//Start sent, send test address in write mode
+				TWDR = (AddressToCheck << 1);
+				TWCR = TWI_CONTROL_CONTINUE;
+				break;
+				
+				case TWI_STATUS_SLAW_ACK:		//SLA+W Transmitted, ACK recieved (device is present)
+				//printf("Device responded at address 0x%02X\n", AddressToCheck);
+				DeviceIsPresent = 1;
+				TWCR = TWI_CONTROL_STOP;
+				endLoop = 1;
+				break;
+				
+				case TWI_STATUS_SLAW_NOACK:		//SLA+W Transmitted, no ACK recieved (device is not present)
+				TWCR = TWI_CONTROL_STOP;
+				endLoop = 1;
+				break;
+				
+				default: 						//This should not get triggered
+				i = TWSR;
+				TWCR = TWI_CONTROL_STOP;
+				#ifdef _TWI_DEBUG
+				printf_P(PSTR("Unhandled Status Code: (TWSR: 0x%02X)\n"), (i & TWI_STATUS_MASK));
+				#endif
+				endLoop = 1;
+				break;
+			}
+		}
+
+	
+	
+	
+	
+	
+	return DeviceIsPresent;
+}
 
 
 

@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <avr/pgmspace.h>
 
+#include "main.h"
 #include "command.h"			//Include this unless it is included in a different header file
 #include "commands.h"			//An application specific command list is required
 //#include "version.h"
@@ -143,7 +144,7 @@ void CommandGetInputChar(uint8_t c)
 		return;
 	}
 	
-	//Only recieve characters if the command function is waiting for a command.
+	//Only receive characters if the command function is waiting for a command.
 	if((CommandStatus == COMMAND_STATUS_TOP_LEVEL_INPUT) || (CommandStatus == COMMAND_STATUS_SUB_LEVEL_INPUT))
 	{
 		if((c > 64) && (c < 91))	//make the command input case insensitive
@@ -578,8 +579,10 @@ static int STAT_C (void)
 	printf("SPCR: 0x%02X\n",SPCR);
 	printf("SPSR: 0x%02X\n",SPSR);
 	
+	printf("Compiled: %s, %s\n", __DATE__, __TIME__);		//TODO: I need to make sure this is updated when I recompile the firmware... Put it in a separate file?
+	
 	#if COMMAND_STAT_SHOW_COMPILE_STRING == 1
-	printf_P(fwCompileDate);
+	//printf_P(fwCompileDate);
 	#endif
 	return 0;
 }

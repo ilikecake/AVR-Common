@@ -42,10 +42,7 @@ void UARTinit (void)
 		UBRR0H = MYUBRR >> 8;
 		UBRR0L = MYUBRR;
 		UCSR0B = (1<<RXEN0)|(1<<TXEN0);		//Activate RX, TX
-		
-		
-		
-		
+
 	#elif defined (__AVR_ATmega32U4__)
 		PRR0 &= ~(1<<PRUSART0);			//Turn on UART power
 		DDRD |= (1<<3);					//PD3 as output (TxD)
@@ -55,11 +52,50 @@ void UARTinit (void)
 		UBRR1H = MYUBRR >> 8;
 		UBRR1L = MYUBRR;
 		UCSR1B = (1<<RXEN1)|(1<<TXEN1);		//Activate RX, TX
+	#elif defined (__AVR_ATmega2561__)
+		#if UART_NUMBER == 0
+			PRR0 &= ~(1<<PRUSART0);			//Turn on UART power
+			DDRE |= (1<<1);					//PE1 as output (TxD)
+			DDRE &= ~(1<<0);				//PE0 as input (RxD)
+		
+			//Set USART Baud Rate
+			UBRR0H = MYUBRR >> 8;
+			UBRR0L = MYUBRR;
+			UCSR0B = (1<<RXEN0)|(1<<TXEN0);		//Activate RX, TX
+		#elif UART_NUMBER == 1
+			PRR1 &= ~(1<<PRUSART1);			//Turn on UART power
+			DDRD |= (1<<3);					//PD3 as output (TxD)
+			DDRD &= ~(1<<2);				//PD2 as input (RxD)
+			
+			//Set USART Baud Rate
+			UBRR1H = MYUBRR >> 8;
+			UBRR1L = MYUBRR;
+			UCSR1B = (1<<RXEN1)|(1<<TXEN1);		//Activate RX, TX
+			UCSR1C = (3<<UCSZ10);				//Set frame format: 8data, 1stop bit TODO: Do I need this for the other cases?
+		#elif UART_NUMBER == 2
+			PRR1 &= ~(1<<PRUSART2);			//Turn on UART power
+			DDRH |= (1<<1);					//PH1 as output (TxD)
+			DDRH &= ~(1<<0);				//PH0 as input (RxD)
+			
+			//Set USART Baud Rate
+			UBRR2H = MYUBRR >> 8;
+			UBRR2L = MYUBRR;
+			UCSR2B = (1<<RXEN2)|(1<<TXEN2);		//Activate RX, TX
+		#elif UART_NUMBER == 3
+			PRR1 &= ~(1<<PRUSART3);			//Turn on UART power
+			DDRJ |= (1<<1);					//PJ1 as output (TxD)
+			DDRJ &= ~(1<<0);				//PJ0 as input (RxD)
+			
+			//Set USART Baud Rate
+			UBRR3H = MYUBRR >> 8;
+			UBRR3L = MYUBRR;
+			UCSR3B = (1<<RXEN3)|(1<<TXEN3);		//Activate RX, TX			
+		#else
+			#error: UART number not defined
+		#endif
 	#else
 		#error: MCU not defined/handled
 	#endif
-	
-   
 	
 	#ifdef UART_ENABLE_LOOPBACK
 	UARTRXINTON();	//TODO:Check if this works
@@ -78,6 +114,22 @@ int UARTPutChar(char c, FILE *stream)
 	#elif defined (__AVR_ATmega32U4__)
 		loop_until_bit_is_set(UCSR1A, UDRE1);
 		UDR1 = c;
+	#elif defined (__AVR_ATmega2561__)
+		#if UART_NUMBER == 0
+			loop_until_bit_is_set(UCSR0A, UDRE0);
+			UDR0 = c;
+		#elif UART_NUMBER == 1
+			loop_until_bit_is_set(UCSR1A, UDRE1);
+			UDR1 = c;
+		#elif UART_NUMBER == 2
+			loop_until_bit_is_set(UCSR2A, UDRE2);
+			UDR2 = c;
+		#elif UART_NUMBER == 3
+			loop_until_bit_is_set(UCSR3A, UDRE3);
+			UDR3 = c;
+		#else
+			#error: UART number not defined
+		#endif
     #else
 		#error: MCU not defined/handled
 	#endif
@@ -87,17 +139,34 @@ int UARTPutChar(char c, FILE *stream)
 
 #ifdef UART_ENABLE_LOOPBACK
 //Interrupt driven UART loopback
+//TODO: is the ISR vector the same for MCUs with multiple USARTS??
 ISR(USART_RX_vect)
 {
 	uint8_t c;
 
 	#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
-		c = UDR0;		//Get char from UART recieve buffer
+		c = UDR0;		//Get char from UART receive buffer
 		UDR0 = c;		//Send char out on UART transmit buffer
 	#elif defined (__AVR_ATmega32U4__)
-		c = UDR1;		//Get char from UART recieve buffer
+		c = UDR1;		//Get char from UART receive buffer
 		UDR1 = c;		//Send char out on UART transmit buffer
-    #else
+    #elif defined (__AVR_ATmega2561__)
+    	#if UART_NUMBER == 0
+			c = UDR0;		//Get char from UART receive buffer
+			UDR0 = c;		//Send char out on UART transmit buffer
+    	#elif UART_NUMBER == 1
+			c = UDR1;		//Get char from UART receive buffer
+			UDR1 = c;		//Send char out on UART transmit buffer
+    	#elif UART_NUMBER == 2
+			c = UDR2;		//Get char from UART receive buffer
+			UDR2 = c;		//Send char out on UART transmit buffer
+    	#elif UART_NUMBER == 3
+			c = UDR3;		//Get char from UART receive buffer
+			UDR3 = c;		//Send char out on UART transmit buffer
+    	#else
+    		#error: UART number not defined
+    	#endif
+	#else
 		#error: MCU not defined/handled
 	#endif
 }
